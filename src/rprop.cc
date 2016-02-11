@@ -11,19 +11,17 @@
 
 namespace libgp {
 
-void RProp::init(double eps_stop, double Delta0, double Deltamin, double Deltamax, double etaminus, double etaplus) 
-{
-  this->Delta0   = Delta0;
+void RProp::init(double eps_stop, double Delta0, double Deltamin,
+                 double Deltamax, double etaminus, double etaplus) {
+  this->Delta0 = Delta0;
   this->Deltamin = Deltamin;
   this->Deltamax = Deltamax;
   this->etaminus = etaminus;
-  this->etaplus  = etaplus;
+  this->etaplus = etaplus;
   this->eps_stop = eps_stop;
-
 }
 
-void RProp::maximize(GaussianProcess * gp, size_t n, bool verbose)
-{
+void RProp::maximize(GaussianProcess* gp, size_t n, bool verbose) {
   int param_dim = gp->covf().get_param_dim();
   Eigen::VectorXd Delta = Eigen::VectorXd::Ones(param_dim) * Delta0;
   Eigen::VectorXd grad_old = Eigen::VectorXd::Zero(param_dim);
@@ -31,16 +29,16 @@ void RProp::maximize(GaussianProcess * gp, size_t n, bool verbose)
   Eigen::VectorXd best_params = params;
   double best = log(0);
 
-  for (size_t i=0; i<n; ++i) {
+  for (size_t i = 0; i < n; ++i) {
     Eigen::VectorXd grad = -gp->log_likelihood_gradient();
     grad_old = grad_old.cwiseProduct(grad);
-    for (int j=0; j<grad_old.size(); ++j) {
+    for (int j = 0; j < grad_old.size(); ++j) {
       if (grad_old(j) > 0) {
-        Delta(j) = std::min(Delta(j)*etaplus, Deltamax);        
+        Delta(j) = std::min(Delta(j) * etaplus, Deltamax);
       } else if (grad_old(j) < 0) {
-        Delta(j) = std::max(Delta(j)*etaminus, Deltamin);
+        Delta(j) = std::max(Delta(j) * etaminus, Deltamin);
         grad(j) = 0;
-      } 
+      }
       params(j) += -Utils::sign(grad(j)) * Delta(j);
     }
     grad_old = grad;
@@ -56,4 +54,4 @@ void RProp::maximize(GaussianProcess * gp, size_t n, bool verbose)
   gp->covf().set_loghyper(best_params);
 }
 
-}
+}  // namespace libgp
